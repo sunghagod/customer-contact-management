@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>고객 연락처 관리</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --bg-card: #ffffff;
+      --bg-input: #ffffff;
+      --text: #333333;
+      --text-secondary: #666666;
+      --text-meta: #999999;
+      --border: #dddddd;
+      --border-tab: #e0e0e0;
+      --primary: #4285f4;
+      --contacted-bg: #e8f5e9;
+      --filter-bg: #ffffff;
+      --progress-bg: #e0e0e0;
+      --stat-bg: #ffffff;
+      --modal-bg: rgba(0,0,0,0.5);
+      --modal-card: #ffffff;
+      --toast-bg: #333333;
+      --shadow: rgba(0,0,0,0.1);
+      --ocr-valid-bg: #f0f8f0;
+      --ocr-warn-bg: #fffbf0;
+      --ocr-err-bg: #fff0f0;
+      --prefix-bg: #fff3e0;
+      --badge-bg: #e0e0e0;
+      --badge-color: #666;
+      --tab-count-bg: #e8eaed;
+      --tab-count-active: #d2e3fc;
+      --source-bg: #f8f9fa;
+    }
+
+    [data-theme="dark"] {
+      --bg: #1a1a2e;
+      --bg-card: #16213e;
+      --bg-input: #1a1a2e;
+      --text: #e0e0e0;
+      --text-secondary: #aaaaaa;
+      --text-meta: #888888;
+      --border: #2a2a4a;
+      --border-tab: #2a2a4a;
+      --primary: #5b9cf6;
+      --contacted-bg: #1b3a2a;
+      --filter-bg: #16213e;
+      --progress-bg: #2a2a4a;
+      --stat-bg: #16213e;
+      --modal-bg: rgba(0,0,0,0.7);
+      --modal-card: #16213e;
+      --toast-bg: #444466;
+      --shadow: rgba(0,0,0,0.3);
+      --ocr-valid-bg: #1b3a2a;
+      --ocr-warn-bg: #3a3520;
+      --ocr-err-bg: #3a1b1b;
+      --prefix-bg: #2a2518;
+      --badge-bg: #2a2a4a;
+      --badge-color: #aaa;
+      --tab-count-bg: #2a2a4a;
+      --tab-count-active: #1a3a6e;
+      --source-bg: #1a1a2e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 80px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .header {
+      background-color: var(--primary);
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+      box-shadow: 0 2px 4px var(--shadow);
+      position: relative;
+    }
+
+    /* ===== 탭 바 ===== */
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 12px;
+      background: var(--bg-card);
+      overflow-x: auto;
+      border-bottom: 2px solid var(--border-tab);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-item {
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-meta);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+      margin-bottom: -2px;
+    }
+
+    .tab-item.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 700;
+    }
+
+    .tab-item:hover {
+      color: var(--primary);
+    }
+
+    .tab-item .tab-count {
+      font-size: 11px;
+      background: var(--tab-count-bg);
+      color: #666;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 4px;
+    }
+
+    .tab-item.active .tab-count {
+      background: var(--tab-count-active);
+      color: #1a73e8;
+    }
+
+    .tab-add-btn {
+      padding: 8px 14px;
+      margin-left: 4px;
+      background: none;
+      border: 1.5px dashed #ccc;
+      border-radius: 6px;
+      color: var(--text-meta);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .tab-add-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #e8f0fe;
+    }
+
+    .dashboard {
+      background: var(--bg-card);
+      margin: 16px;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .progress-bar {
+      height: 24px;
+      background-color: var(--progress-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4285f4, #34a853);
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-text {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      line-height: 24px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .search-container {
+      margin: 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .search-input {
+      background: var(--bg-input);
+      color: var(--text);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 0 16px 16px 16px;
+      overflow-x: auto;
+    }
+
+    .filter-tab {
+      padding: 8px 16px;
+      border: none;
+      background-color: var(--filter-bg);
+      color: var(--text);
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .filter-tab.active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .contact-list {
+      margin: 0 16px;
+    }
+
+    .contact-item {
+      background: var(--bg-card);
+      padding: 16px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: background-color 0.2s;
+    }
+
+    .contact-item.contacted {
+      background-color: var(--contacted-bg);
+    }
+
+    .contact-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .contact-info {
+      flex: 1;
+    }
+
+    .contact-delete {
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .contact-delete:hover {
+      background: #d32f2f;
+    }
+
+    .contact-phone {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .contact-phone a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .contact-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .fab {
+      position: fixed;
+      bottom: 80px;
+      right: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      font-size: 24px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .fab:hover {
+      transform: scale(1.1);
+    }
+
+    .fab.secondary {
+      bottom: 144px;
+      background-color: #34a853;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--modal-bg);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      background: var(--modal-card);
+      color: var(--text);
+      margin: 40px auto;
+      padding: 24px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .modal-header {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .input-group input, .input-group select, .input-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 16px;
+      background: var(--bg-input);
+      color: var(--text);
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background-color: #ea4335;
+      color: white;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #4285f4;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--toast-bg);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      display: none;
+      z-index: 2000;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-wrapper input[type=file] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-input-label {
+      display: block;
+      padding: 12px;
+      background: #4285f4;
+      color: white;
+      text-align: center;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #uploadPreview {
+      margin-top: 16px;
+    }
+
+    .ocr-result-item {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ocr-result-item.valid {
+      border-color: #34a853;
+      background-color: #f0f8f0;
+    }
+
+    .ocr-result-item.warning {
+      border-color: #fbbc04;
+      background-color: #fffbf0;
+    }
+
+    .ocr-result-item.error {
+      border-color: #ea4335;
+      background-color: #fff0f0;
+    }
+
+    .confidence-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background-color: #e0e0e0;
+    }
+
+    .move-info {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    고객 연락처 관리
+    <button id="themeToggle" onclick="toggleTheme()" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;border-radius:8px;">🌙</button>
+  </div>
+
+  <!-- 탭 바 -->
+  <div class="tab-bar" id="tabBar">
+    <div style="padding: 12px; color: #999; font-size: 13px;">탭 로딩중...</div>
+  </div>
+
+  <div class="dashboard">
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-number" id="statTotal">0</div>
+        <div class="stat-label">전체</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="statContacted">0</div>
+        <div class="stat-label">연락 완료</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="statRemaining">0</div>
+        <div class="stat-label">미연락</div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%;">
+        <span class="progress-text" id="progressText">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-container">
+    <input type="text" class="search-input" id="searchInput" placeholder="전화번호 검색...">
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-filter="all">전체 <span id="filterAll">0</span></button>
+    <button class="filter-tab" data-filter="remaining">미연락 <span id="filterRemaining">0</span></button>
+    <button class="filter-tab" data-filter="contacted">연락 완료 <span id="filterContacted">0</span></button>
+  </div>
+
+  <div class="contact-list" id="contactList">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>데이터를 불러오는 중...</div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" style="display:none;">
+  <button class="fab" onclick="document.getElementById('fileInput').click()">📷</button>
+  <button class="fab secondary" onclick="openManualAddModal()">+</button>
+  <button class="fab" style="bottom: 208px; background-color: #ea4335;" onclick="openBulkCheckModal()">✅</button>
+  <button class="fab" style="bottom: 272px; background-color: #ff9800;" onclick="openBulkInputModal()">📋</button>
+
+  <!-- 수동 추가 모달 -->
+  <div id="manualAddModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">전화번호 추가</div>
+      <div class="input-group">
+        <label>전화번호</label>
+        <input type="tel" id="manualPhoneInput" placeholder="010-1234-5678">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeManualAddModal()">취소</button>
+        <button class="btn btn-primary" onclick="saveManualContact()">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OCR 업로드 모달 -->
+  <div id="uploadModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">사진에서 전화번호 추출</div>
+      <div id="uploadPreview"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeUploadModal()">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OCR 결과 모달 -->
+  <div id="ocrResultModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">추출된 전화번호</div>
+      <div id="ocrStats" style="margin-bottom: 12px; padding: 12px; background: #f0f0f0; border-radius: 4px;"></div>
+      <div style="margin-bottom: 12px;">
+        <input type="text" id="ocrMemoInput" placeholder="메모 입력 (선택) — 저장되는 모든 번호에 일괄 적용" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px;">
+      </div>
+      <div id="ocrPrefixFilter" style="margin-bottom: 12px; padding: 10px; background: #fff3e0; border-radius: 4px; font-size: 13px;">
+        <div style="font-weight:600; margin-bottom:6px;">앞자리별 일괄 선택/해제</div>
+        <div id="prefixBtns" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+      </div>
+      <div id="ocrResults"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeOcrResultModal()">취소</button>
+        <button class="btn btn-primary" id="saveOcrBtn" onclick="saveOcrResults()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 번호 일괄 입력 모달 -->
+  <div id="bulkInputModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">📋 번호 일괄 입력</div>
+      <p style="font-size: 14px; color: #666; margin-bottom: 12px;">여러 전화번호를 붙여넣거나 입력하세요.<br>줄바꿈, 쉼표, 공백 등 어떤 구분자도 됩니다.</p>
+      <div class="input-group">
+        <textarea id="bulkInputText" rows="8" placeholder="010-1234-5678&#10;010-9876-5432&#10;01012345678&#10;010 3333 4444" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 15px; resize: vertical; font-family: monospace;"></textarea>
+      </div>
+      <div id="bulkInputResult" style="display: none; max-height: 300px; overflow-y: auto; margin-bottom: 8px;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeBulkInputModal()">취소</button>
+        <button class="btn" id="bulkSaveBtn" style="display: none; background-color: #34a853; color: white;" onclick="saveBulkInput()">저장</button>
+        <button class="btn btn-primary" id="bulkParseBtn" onclick="parseBulkInput()">번호 추출</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 일괄 체크 모달 -->
+  <div id="bulkCheckModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">📋 일괄 연락 완료 체크</div>
+      <p style="margin-bottom:16px; color:#666; font-size:14px;">맨 아래부터 순서대로 입력한 건수만큼 연락 완료로 체크합니다.</p>
+      <div class="input-group">
+        <label>체크할 건수</label>
+        <input type="number" id="bulkCheckCount" placeholder="예: 12000" min="1">
+      </div>
+      <div id="bulkCheckStatus" style="margin-top:12px; font-size:14px; color:#4285f4;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeBulkCheckModal()">취소</button>
+        <button class="btn btn-primary" id="bulkCheckBtn" onclick="runBulkCheck()">체크 실행</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 새 탭 만들기 모달 -->
+  <div id="newTabModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">새 시트 탭 만들기</div>
+      <div class="input-group">
+        <label>탭 이름</label>
+        <input type="text" id="newTabName" placeholder="예: 4월 고객">
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; background: #f8f9fa; border-radius: 6px;">
+          <input type="checkbox" id="moveUncontacted" checked style="width: 18px; height: 18px;" onchange="toggleSourceTab()">
+          <div>
+            <div style="font-weight: 600; font-size: 14px;">미연락 건을 새 탭으로 이동</div>
+            <div style="font-size: 12px; color: #666; margin-top: 2px;">선택한 탭의 미연락 건이 새 탭으로 옮겨지고, 원래 탭에서는 삭제됩니다.</div>
+          </div>
+        </label>
+      </div>
+      <div class="input-group" id="sourceTabGroup" style="margin-bottom: 16px;">
+        <label>이동할 탭 선택</label>
+        <select id="sourceTabSelect"></select>
+      </div>
+      <div id="newTabStatus" style="font-size: 14px; color: #666;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeNewTabModal()">취소</button>
+        <button class="btn btn-primary" id="createTabBtn" onclick="createNewTab()">생성</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기존 탭으로 미연락 이동 모달 -->
+  <div id="moveModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">미연락 건 이동</div>
+      <div class="input-group">
+        <label>소스 탭 (미연락 건을 꺼낼 탭)</label>
+        <select id="moveSourceSelect"></select>
+      </div>
+      <div class="input-group">
+        <label>대상 탭 (미연락 건을 넣을 탭)</label>
+        <select id="moveTargetSelect"></select>
+      </div>
+      <div id="moveStatus" style="font-size: 14px; color: var(--text-secondary);"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeMoveModal()">취소</button>
+        <button class="btn btn-primary" id="moveBtn" onclick="runMoveUncontacted()">이동</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    var allContacts = [];
+    var currentFilter = 'all';
+    var searchQuery = '';
+    var ocrResultData = null;
+    var lastMemo = '';
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadTabs();
+      loadContacts();
+
+      document.getElementById('searchInput').addEventListener('input', function(e) {
+        searchQuery = e.target.value;
+        filterAndRenderContacts();
+      });
+
+      document.querySelectorAll('.filter-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          document.querySelectorAll('.filter-tab').forEach(function(t) { t.classList.remove('active'); });
+          this.classList.add('active');
+          currentFilter = this.dataset.filter;
+          filterAndRenderContacts();
+        });
+      });
+    });
+
+    // ===== 탭 관리 =====
+
+    function loadTabs() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            renderTabs(data.tabs, data.activeTab);
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.error('탭 로드 오류:', error);
+        })
+        .getSheetTabs();
+    }
+
+    function renderTabs(tabs, activeTab) {
+      var container = document.getElementById('tabBar');
+      var html = '';
+
+      tabs.forEach(function(tab) {
+        var isActive = tab.name === activeTab;
+        html += '<div class="tab-item ' + (isActive ? 'active' : '') + '" onclick="switchTab(\'' + tab.name.replace(/'/g, "\\'") + '\')">'
+          + tab.name
+          + '<span class="tab-count">' + tab.count + '</span>'
+          + '</div>';
+      });
+
+      html += '<button class="tab-add-btn" onclick="openNewTabModal()">+ 새 탭</button>';
+      html += '<button class="tab-add-btn" onclick="openMoveModal()" style="border-color:#34a853;color:#34a853;">이동</button>';
+      container.innerHTML = html;
+    }
+
+    function switchTab(tabName) {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            loadTabs();
+            loadContacts();
+          } else {
+            showToast(data.message || '탭 전환 실패');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showToast('탭 전환 실패: ' + error.message);
+        })
+        .switchTab(tabName);
+    }
+
+    function openNewTabModal() {
+      document.getElementById('newTabModal').style.display = 'block';
+      var today = new Date();
+      var defaultName = (today.getMonth() + 1) + '월 ' + today.getDate() + '일';
+      document.getElementById('newTabName').value = defaultName;
+      document.getElementById('moveUncontacted').checked = true;
+      document.getElementById('newTabStatus').textContent = '';
+      document.getElementById('createTabBtn').disabled = false;
+      document.getElementById('createTabBtn').textContent = '생성';
+
+      // 소스 탭 드롭다운 채우기
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            var select = document.getElementById('sourceTabSelect');
+            select.innerHTML = '';
+            data.tabs.forEach(function(tab) {
+              var opt = document.createElement('option');
+              opt.value = tab.name;
+              opt.textContent = tab.name + ' (' + tab.count + '건)';
+              if (tab.isActive) opt.selected = true;
+              select.appendChild(opt);
+            });
+          }
+        })
+        .getSheetTabs();
+
+      toggleSourceTab();
+    }
+
+    function toggleSourceTab() {
+      var show = document.getElementById('moveUncontacted').checked;
+      document.getElementById('sourceTabGroup').style.display = show ? 'block' : 'none';
+    }
+
+    function closeNewTabModal() {
+      document.getElementById('newTabModal').style.display = 'none';
+    }
+
+    function createNewTab() {
+      var tabName = document.getElementById('newTabName').value.trim();
+      if (!tabName) {
+        showToast('탭 이름을 입력해주세요.');
+        return;
+      }
+
+      var moveUncontacted = document.getElementById('moveUncontacted').checked;
+      var sourceTabName = moveUncontacted ? document.getElementById('sourceTabSelect').value : null;
+      var btn = document.getElementById('createTabBtn');
+      btn.disabled = true;
+      btn.textContent = '생성 중...';
+      document.getElementById('newTabStatus').textContent = moveUncontacted
+        ? '"' + sourceTabName + '"에서 미연락 건 이동 중... 잠시 기다려주세요.'
+        : '새 탭 생성 중...';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast(data.message);
+            loadTabs();
+            loadContacts();
+            closeNewTabModal();
+          } else {
+            showToast(data.message);
+            document.getElementById('newTabStatus').textContent = data.message;
+          }
+          btn.disabled = false;
+          btn.textContent = '생성';
+        })
+        .withFailureHandler(function(error) {
+          showToast('오류: ' + error.message);
+          document.getElementById('newTabStatus').textContent = '오류: ' + error.message;
+          btn.disabled = false;
+          btn.textContent = '생성';
+        })
+        .createNewTabWithMigration(tabName, moveUncontacted, sourceTabName);
+    }
+
+    // ===== 기존 탭으로 이동 =====
+
+    function openMoveModal() {
+      document.getElementById('moveModal').style.display = 'block';
+      document.getElementById('moveStatus').textContent = '';
+      document.getElementById('moveBtn').disabled = false;
+      document.getElementById('moveBtn').textContent = '이동';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            var srcSel = document.getElementById('moveSourceSelect');
+            var tgtSel = document.getElementById('moveTargetSelect');
+            srcSel.innerHTML = '';
+            tgtSel.innerHTML = '';
+            data.tabs.forEach(function(tab) {
+              var opt1 = document.createElement('option');
+              opt1.value = tab.name;
+              opt1.textContent = tab.name + ' (' + tab.count + '건)';
+              srcSel.appendChild(opt1);
+
+              var opt2 = document.createElement('option');
+              opt2.value = tab.name;
+              opt2.textContent = tab.name + ' (' + tab.count + '건)';
+              tgtSel.appendChild(opt2);
+            });
+          }
+        })
+        .getSheetTabs();
+    }
+
+    function closeMoveModal() {
+      document.getElementById('moveModal').style.display = 'none';
+    }
+
+    function runMoveUncontacted() {
+      var src = document.getElementById('moveSourceSelect').value;
+      var tgt = document.getElementById('moveTargetSelect').value;
+      if (src === tgt) {
+        showToast('소스와 대상 탭이 같습니다.');
+        return;
+      }
+
+      var btn = document.getElementById('moveBtn');
+      btn.disabled = true;
+      btn.textContent = '이동 중...';
+      document.getElementById('moveStatus').textContent = '"' + src + '" → "' + tgt + '" 이동 중... 잠시 기다려주세요.';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast(data.message);
+            loadTabs();
+            loadContacts();
+            closeMoveModal();
+          } else {
+            showToast(data.message);
+            document.getElementById('moveStatus').textContent = data.message;
+          }
+          btn.disabled = false;
+          btn.textContent = '이동';
+        })
+        .withFailureHandler(function(error) {
+          showToast('오류: ' + error.message);
+          document.getElementById('moveStatus').textContent = '오류: ' + error.message;
+          btn.disabled = false;
+          btn.textContent = '이동';
+        })
+        .moveUncontactedToTab(src, tgt);
+    }
+
+    // ===== 연락처 =====
+
+    function loadContacts() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (!data) {
+            document.getElementById('contactList').innerHTML = '<div class="empty-state">데이터를 불러올 수 없습니다.</div>';
+            return;
+          }
+          allContacts = data.contacts || [];
+          filterAndRenderContacts();
+          updateStatistics();
+        })
+        .withFailureHandler(function(error) {
+          showToast('데이터를 불러오는데 실패했습니다.');
+          document.getElementById('contactList').innerHTML = '<div class="empty-state">데이터를 불러오는데 실패했습니다.</div>';
+        })
+        .getAllContacts();
+    }
+
+    function updateStatistics() {
+      google.script.run
+        .withSuccessHandler(function(stats) {
+          document.getElementById('statTotal').textContent = stats.total;
+          document.getElementById('statContacted').textContent = stats.contacted;
+          document.getElementById('statRemaining').textContent = stats.remaining;
+          document.getElementById('progressFill').style.width = stats.percentage + '%';
+          document.getElementById('progressText').textContent = stats.percentage + '%';
+        })
+        .withFailureHandler(function(error) {
+          console.error('통계 로드 오류:', error);
+        })
+        .getStatistics();
+    }
+
+    function filterAndRenderContacts() {
+      var filtered = allContacts;
+
+      if (searchQuery) {
+        filtered = filtered.filter(function(c) { return c.phone.includes(searchQuery); });
+      }
+
+      if (currentFilter === 'remaining') {
+        filtered = filtered.filter(function(c) { return !c.contacted; });
+      } else if (currentFilter === 'contacted') {
+        filtered = filtered.filter(function(c) { return c.contacted; });
+      }
+
+      document.getElementById('filterAll').textContent = allContacts.length;
+      document.getElementById('filterRemaining').textContent = allContacts.filter(function(c) { return !c.contacted; }).length;
+      document.getElementById('filterContacted').textContent = allContacts.filter(function(c) { return c.contacted; }).length;
+
+      renderContacts(filtered);
+    }
+
+    function renderContacts(contacts) {
+      var container = document.getElementById('contactList');
+
+      if (contacts.length === 0) {
+        container.innerHTML = '<div class="empty-state">연락처가 없습니다.</div>';
+        return;
+      }
+
+      container.innerHTML = contacts.map(function(contact) {
+        return '<div class="contact-item ' + (contact.contacted ? 'contacted' : '') + '">'
+          + '<input type="checkbox" class="contact-checkbox" ' + (contact.contacted ? 'checked' : '')
+          + ' onchange="toggleContactStatus(' + contact.row + ', this.checked)">'
+          + '<div class="contact-info">'
+          + '<div class="contact-phone"><a href="tel:' + contact.phone + '">' + contact.phone + '</a></div>'
+          + '<div class="contact-meta">'
+          + '등록: ' + formatDate(contact.createdAt)
+          + (contact.contactedAt ? ' | 연락: ' + formatDate(contact.contactedAt) : '')
+          + '</div></div>'
+          + '<button class="contact-delete" onclick="deleteContact(' + contact.row + ', \'' + contact.phone + '\')">삭제</button>'
+          + '</div>';
+      }).join('');
+    }
+
+    function toggleContactStatus(row, status) {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast('상태가 업데이트되었습니다.');
+            loadContacts();
+          }
+        })
+        .withFailureHandler(function(error) {
+          showToast('업데이트 실패: ' + error.message);
+          loadContacts();
+        })
+        .updateContactStatus(row, status);
+    }
+
+    function deleteContact(row, phone) {
+      if (!confirm(phone + '을(를) 삭제하시겠습니까?')) return;
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast('삭제되었습니다.');
+            loadContacts();
+          }
+        })
+        .withFailureHandler(function(error) {
+          showToast('삭제 실패: ' + error.message);
+        })
+        .deleteContact(row);
+    }
+
+    // ===== 수동 추가 =====
+
+    function openManualAddModal() {
+      document.getElementById('manualAddModal').style.display = 'block';
+      document.getElementById('manualPhoneInput').value = '';
+    }
+
+    function closeManualAddModal() {
+      document.getElementById('manualAddModal').style.display = 'none';
+      document.getElementById('manualPhoneInput').value = '';
+    }
+
+    function saveManualContact() {
+      var phone = document.getElementById('manualPhoneInput').value.trim();
+      if (!phone) {
+        showToast('전화번호를 입력해주세요.');
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast(data.message);
+            loadContacts();
+            loadTabs();
+            closeManualAddModal();
+          } else {
+            showToast(data.message);
+          }
+        })
+        .withFailureHandler(function(error) {
+          showToast('추가 실패: ' + error.message);
+        })
+        .addManualContact(phone);
+    }
+
+    // ===== OCR =====
+
+    function openUploadModal() {
+      document.getElementById('uploadModal').style.display = 'block';
+      document.getElementById('uploadPreview').innerHTML = '';
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('uploadPreview').innerHTML = '';
+    }
+
+    function handleFileSelect(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      document.getElementById('uploadModal').style.display = 'block';
+      document.getElementById('uploadPreview').innerHTML = '<div class="loading"><div class="spinner"></div><div>이미지 최적화 중...</div></div>';
+
+      compressImage(file, function(compressedBase64) {
+        document.getElementById('uploadPreview').innerHTML =
+          '<img src="' + compressedBase64 + '" style="max-width: 100%; border-radius: 4px; margin-bottom: 12px;">'
+          + '<button class="btn btn-primary" style="width: 100%;" onclick="processOCR(\'' + compressedBase64 + '\')">OCR 실행</button>';
+      });
+    }
+
+    function compressImage(file, callback) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var MAX_WIDTH = 1600;
+          var MAX_HEIGHT = 1600;
+          var width = img.width;
+          var height = img.height;
+
+          if (width < 400 || height < 400) {
+            if (!confirm('이미지 해상도가 낮아 인식률이 떨어질 수 있습니다. 계속하시겠습니까?')) {
+              document.getElementById('uploadPreview').innerHTML = '';
+              document.getElementById('fileInput').value = '';
+              return;
+            }
+          }
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round(height * MAX_WIDTH / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round(width * MAX_HEIGHT / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          var canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          var ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+
+          var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          var data = imageData.data;
+          var brightness = 0;
+          for (var i = 0; i < data.length; i += 4) {
+            var avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            brightness += avg;
+          }
+          brightness = brightness / (data.length / 4);
+
+          if (brightness < 50) {
+            showToast('이미지가 너무 어둡습니다. 밝은 곳에서 다시 촬영하세요.');
+            document.getElementById('uploadPreview').innerHTML = '';
+            document.getElementById('fileInput').value = '';
+            return;
+          }
+
+          var compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          callback(compressedBase64);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function processOCR(base64Image) {
+      var progressStep = 0;
+      var progressMessages = ['이미지 업로드 중...', 'Vision AI 분석 중...', '전화번호 추출 중...', '결과 검증 중...'];
+
+      document.getElementById('uploadPreview').innerHTML = '<div class="loading"><div class="spinner"></div><div id="ocrProgress">' + progressMessages[0] + '</div></div>';
+
+      var progressInterval = setInterval(function() {
+        progressStep = (progressStep + 1) % progressMessages.length;
+        var el = document.getElementById('ocrProgress');
+        if (el) el.textContent = progressMessages[progressStep];
+      }, 2000);
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          clearInterval(progressInterval);
+          if (data.success) {
+            ocrResultData = data;
+            showOcrResults(data);
+            closeUploadModal();
+          } else {
+            showToast('OCR 실패: ' + (data.message || '알 수 없는 오류'));
+            closeUploadModal();
+          }
+        })
+        .withFailureHandler(function(error) {
+          clearInterval(progressInterval);
+          showToast('OCR 처리 실패: ' + error.message);
+          closeUploadModal();
+        })
+        .processOCR(base64Image);
+    }
+
+    function showOcrResults(data) {
+      var modal = document.getElementById('ocrResultModal');
+      var statsEl = document.getElementById('ocrStats');
+      var resultsEl = document.getElementById('ocrResults');
+
+      statsEl.innerHTML = '추출된 전화번호: ' + data.totalCount + '건<br>'
+        + '정상 ' + data.validCount + '건 | 경고 ' + data.warningCount + '건 | 오류 ' + data.errorCount + '건'
+        + '<details style="margin-top:8px;font-size:12px;color:#999;">'
+        + '<summary>OCR 원문 보기</summary>'
+        + '<pre style="white-space:pre-wrap;word-break:break-all;margin-top:4px;">' + (data.debugText || '') + '</pre>'
+        + '</details>';
+
+      resultsEl.innerHTML = data.numbers.map(function(item, index) {
+        var emoji = item.status === 'valid' ? '🟢' : item.status === 'warning' ? '🟡' : '🔴';
+        return '<div class="ocr-result-item ' + item.status + '">'
+          + '<input type="checkbox" ' + (item.autoSelect ? 'checked' : '') + ' data-index="' + index + '">'
+          + '<span>' + emoji + '</span>'
+          + '<span style="flex: 1;" data-phone="' + item.phone + '">' + item.phone + '</span>'
+          + '<span class="confidence-badge">' + Math.round(item.confidence * 100) + '%</span>'
+          + (item.message ? '<span style="font-size: 12px; color: #666;">[' + item.message + ']</span>' : '')
+          + '</div>';
+      }).join('');
+
+      document.getElementById('ocrMemoInput').value = lastMemo;
+      modal.style.display = 'block';
+      renderPrefixButtons();
+    }
+
+    function renderPrefixButtons() {
+      var checkboxes = document.querySelectorAll('#ocrResults .ocr-result-item');
+      var prefixMap = {};
+
+      checkboxes.forEach(function(item, idx) {
+        var phoneEl = item.querySelector('span[data-phone]');
+        if (!phoneEl) return;
+        var phone = phoneEl.dataset.phone;
+        var prefix = phone.substring(0, 3);
+        if (!prefixMap[prefix]) prefixMap[prefix] = [];
+        prefixMap[prefix].push(idx);
+      });
+
+      var container = document.getElementById('prefixBtns');
+      container.innerHTML = '';
+
+      if (Object.keys(prefixMap).length === 0) {
+        container.innerHTML = '<span style="color:#999;">번호 없음</span>';
+        return;
+      }
+
+      var allBtn = document.createElement('button');
+      allBtn.textContent = '전체 선택';
+      allBtn.style.cssText = 'padding:4px 10px;border:1px solid #4285f4;border-radius:12px;background:#4285f4;color:white;font-size:12px;cursor:pointer;';
+      allBtn.onclick = function() {
+        var all = document.querySelectorAll('#ocrResults input[type="checkbox"]');
+        var indexes = [];
+        for (var i = 0; i < all.length; i++) indexes.push(i);
+        toggleByIndexes(indexes, true);
+      };
+      container.appendChild(allBtn);
+
+      var noneBtn = document.createElement('button');
+      noneBtn.textContent = '전체 해제';
+      noneBtn.style.cssText = 'padding:4px 10px;border:1px solid #999;border-radius:12px;background:#fff;color:#333;font-size:12px;cursor:pointer;';
+      noneBtn.onclick = function() {
+        var all = document.querySelectorAll('#ocrResults input[type="checkbox"]');
+        var indexes = [];
+        for (var i = 0; i < all.length; i++) indexes.push(i);
+        toggleByIndexes(indexes, false);
+      };
+      container.appendChild(noneBtn);
+
+      Object.entries(prefixMap).sort().forEach(function(entry) {
+        var prefix = entry[0];
+        var indexes = entry[1];
+        var btn = document.createElement('button');
+        var isMobile = prefix.startsWith('01');
+        var color = isMobile ? '#34a853' : '#ea4335';
+
+        function setActive(active) {
+          btn.dataset.active = active ? 'true' : 'false';
+          btn.style.background = active ? color : '#fff';
+          btn.style.color = active ? 'white' : color;
+          btn.style.border = '1px solid ' + color;
+          btn.textContent = (active ? '✓ ' : '✗ ') + prefix + ' (' + indexes.length + ')';
+        }
+
+        btn.style.cssText = 'padding:4px 10px;border-radius:12px;font-size:12px;cursor:pointer;';
+        setActive(true);
+        btn.onclick = function() {
+          var nowActive = this.dataset.active === 'true';
+          toggleByIndexes(indexes, !nowActive);
+          setActive(!nowActive);
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function toggleByIndexes(indexes, check) {
+      var checkboxes = document.querySelectorAll('#ocrResults input[type="checkbox"]');
+      indexes.forEach(function(i) {
+        if (checkboxes[i]) checkboxes[i].checked = check;
+      });
+    }
+
+    function closeOcrResultModal() {
+      lastMemo = document.getElementById('ocrMemoInput').value.trim();
+      document.getElementById('ocrResultModal').style.display = 'none';
+      ocrResultData = null;
+    }
+
+    function saveOcrResults() {
+      if (!ocrResultData) return;
+
+      var checkboxes = document.querySelectorAll('#ocrResults input[type="checkbox"]');
+      var selectedNumbers = [];
+
+      checkboxes.forEach(function(cb, idx) {
+        if (cb.checked) selectedNumbers.push(ocrResultData.numbers[idx].phone);
+      });
+
+      if (selectedNumbers.length === 0) {
+        showToast('저장할 번호를 선택해주세요.');
+        return;
+      }
+
+      var memo = document.getElementById('ocrMemoInput').value.trim();
+      document.getElementById('saveOcrBtn').disabled = true;
+      document.getElementById('saveOcrBtn').textContent = '저장 중...';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast(data.message);
+            loadContacts();
+            loadTabs();
+            closeOcrResultModal();
+          } else {
+            showToast('저장 실패: ' + data.message);
+          }
+          document.getElementById('saveOcrBtn').disabled = false;
+          document.getElementById('saveOcrBtn').textContent = '저장';
+        })
+        .withFailureHandler(function(error) {
+          showToast('저장 실패: ' + error.message);
+          document.getElementById('saveOcrBtn').disabled = false;
+          document.getElementById('saveOcrBtn').textContent = '저장';
+        })
+        .saveContacts(selectedNumbers, ocrResultData.imageLink, memo);
+    }
+
+    // ===== 일괄 입력 =====
+
+    var bulkParsedData = null;
+
+    function openBulkInputModal() {
+      document.getElementById('bulkInputModal').style.display = 'block';
+      document.getElementById('bulkInputText').value = '';
+      document.getElementById('bulkInputResult').style.display = 'none';
+      document.getElementById('bulkInputResult').innerHTML = '';
+      document.getElementById('bulkSaveBtn').style.display = 'none';
+      document.getElementById('bulkParseBtn').disabled = false;
+      document.getElementById('bulkParseBtn').textContent = '번호 추출';
+      bulkParsedData = null;
+    }
+
+    function closeBulkInputModal() {
+      document.getElementById('bulkInputModal').style.display = 'none';
+      bulkParsedData = null;
+    }
+
+    function parseBulkInput() {
+      var text = document.getElementById('bulkInputText').value.trim();
+      if (!text) {
+        showToast('번호를 입력해주세요.');
+        return;
+      }
+
+      document.getElementById('bulkParseBtn').disabled = true;
+      document.getElementById('bulkParseBtn').textContent = '추출 중...';
+      document.getElementById('bulkInputResult').style.display = 'none';
+      document.getElementById('bulkSaveBtn').style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('bulkParseBtn').disabled = false;
+          document.getElementById('bulkParseBtn').textContent = '번호 추출';
+          if (!data.success) {
+            showToast(data.message || '전화번호를 찾을 수 없습니다.');
+            return;
+          }
+          bulkParsedData = data;
+          showBulkResults(data);
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('bulkParseBtn').disabled = false;
+          document.getElementById('bulkParseBtn').textContent = '번호 추출';
+          showToast('오류: ' + error.message);
+        })
+        .parseBulkText(text);
+    }
+
+    function showBulkResults(data) {
+      var resultEl = document.getElementById('bulkInputResult');
+
+      var html = '<div style="margin-bottom: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 13px;">'
+        + '추출된 전화번호: <b>' + data.totalCount + '건</b> &nbsp;|&nbsp; '
+        + '정상 <span style="color:#34a853;">' + data.validCount + '</span>건 &nbsp;'
+        + '경고 <span style="color:#f9a825;">' + data.warningCount + '</span>건 &nbsp;'
+        + '오류 <span style="color:#ea4335;">' + data.errorCount + '</span>건</div>';
+
+      html += data.numbers.map(function(item, index) {
+        var emoji = item.status === 'valid' ? '🟢' : item.status === 'warning' ? '🟡' : '🔴';
+        return '<div class="ocr-result-item ' + item.status + '">'
+          + '<input type="checkbox" ' + (item.autoSelect ? 'checked' : '') + ' data-bulk-index="' + index + '">'
+          + '<span>' + emoji + '</span>'
+          + '<span style="flex: 1;">' + item.phone + '</span>'
+          + (item.message ? '<span style="font-size: 12px; color: #666;">[' + item.message + ']</span>' : '')
+          + '</div>';
+      }).join('');
+
+      resultEl.innerHTML = html;
+      resultEl.style.display = 'block';
+      document.getElementById('bulkSaveBtn').style.display = 'inline-block';
+    }
+
+    function saveBulkInput() {
+      if (!bulkParsedData) return;
+
+      var checkboxes = document.querySelectorAll('#bulkInputResult input[type="checkbox"]');
+      var selectedNumbers = [];
+
+      checkboxes.forEach(function(cb, idx) {
+        if (cb.checked) selectedNumbers.push(bulkParsedData.numbers[idx].phone);
+      });
+
+      if (selectedNumbers.length === 0) {
+        showToast('저장할 번호를 선택해주세요.');
+        return;
+      }
+
+      document.getElementById('bulkSaveBtn').disabled = true;
+      document.getElementById('bulkSaveBtn').textContent = '저장 중...';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast(data.message);
+            loadContacts();
+            loadTabs();
+            closeBulkInputModal();
+          } else {
+            showToast('저장 실패: ' + data.message);
+          }
+          document.getElementById('bulkSaveBtn').disabled = false;
+          document.getElementById('bulkSaveBtn').textContent = '저장';
+        })
+        .withFailureHandler(function(error) {
+          showToast('저장 실패: ' + error.message);
+          document.getElementById('bulkSaveBtn').disabled = false;
+          document.getElementById('bulkSaveBtn').textContent = '저장';
+        })
+        .saveContacts(selectedNumbers, '');
+    }
+
+    // ===== 일괄 체크 =====
+
+    function openBulkCheckModal() {
+      document.getElementById('bulkCheckModal').style.display = 'block';
+      document.getElementById('bulkCheckCount').value = '';
+      document.getElementById('bulkCheckStatus').textContent = '';
+      document.getElementById('bulkCheckBtn').disabled = false;
+      document.getElementById('bulkCheckBtn').textContent = '체크 실행';
+    }
+
+    function closeBulkCheckModal() {
+      document.getElementById('bulkCheckModal').style.display = 'none';
+    }
+
+    function runBulkCheck() {
+      var count = parseInt(document.getElementById('bulkCheckCount').value);
+      if (!count || count < 1) {
+        showToast('건수를 올바르게 입력해주세요.');
+        return;
+      }
+
+      if (!confirm(count + '건을 맨 아래부터 연락 완료로 체크할까요?')) return;
+
+      document.getElementById('bulkCheckBtn').disabled = true;
+      document.getElementById('bulkCheckBtn').textContent = '처리 중...';
+      document.getElementById('bulkCheckStatus').textContent = '처리 중입니다. 잠시 기다려주세요...';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            document.getElementById('bulkCheckStatus').textContent = '완료! ' + result.checked + '건 체크됨 (행 ' + result.startRow + '~' + result.endRow + ')';
+            showToast(result.message);
+            loadContacts();
+            loadTabs();
+          } else {
+            document.getElementById('bulkCheckStatus').textContent = '실패: ' + result.message;
+          }
+          document.getElementById('bulkCheckBtn').disabled = false;
+          document.getElementById('bulkCheckBtn').textContent = '체크 실행';
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('bulkCheckStatus').textContent = '오류: ' + error.message;
+          document.getElementById('bulkCheckBtn').disabled = false;
+          document.getElementById('bulkCheckBtn').textContent = '체크 실행';
+        })
+        .bulkCheckBottomRows(count);
+    }
+
+    // ===== 유틸 =====
+
+    // ===== 다크모드 =====
+
+    function toggleTheme() {
+      var html = document.documentElement;
+      var isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+
+    (function initTheme() {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        var btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = '☀️';
+      }
+    })();
+
+    function formatDate(date) {
+      if (!date) return '';
+      var d = new Date(date);
+      return d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+    }
+
+    function showToast(message) {
+      var toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(function() { toast.style.display = 'none'; }, 3000);
+    }
+  </script>
+</body>
+</html>
