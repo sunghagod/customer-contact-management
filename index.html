@@ -355,7 +355,6 @@
     }
 
     .fab.secondary {
-      bottom: 144px;
       background-color: #34a853;
     }
 
@@ -606,10 +605,12 @@
   </div>
 
   <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" style="display:none;">
-  <button class="fab" onclick="document.getElementById('fileInput').click()">📷</button>
-  <button class="fab secondary" onclick="openManualAddModal()">+</button>
-  <button class="fab" style="bottom: 208px; background-color: #ea4335;" onclick="openBulkCheckModal()">✅</button>
-  <button class="fab" style="bottom: 272px; background-color: #ff9800;" onclick="openBulkInputModal()">📋</button>
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" style="display:none;">
+  <button class="fab" onclick="document.getElementById('cameraInput').click()">📷</button>
+  <button class="fab" style="bottom: 144px; background-color: #5b9cf6;" onclick="document.getElementById('fileInput').click()">📁</button>
+  <button class="fab secondary" style="bottom: 208px;" onclick="openManualAddModal()">+</button>
+  <button class="fab" style="bottom: 272px; background-color: #ea4335;" onclick="openBulkCheckModal()">✅</button>
+  <button class="fab" style="bottom: 336px; background-color: #ff9800;" onclick="openBulkInputModal()">📋</button>
 
   <!-- 수동 추가 모달 -->
   <div id="manualAddModal" class="modal">
