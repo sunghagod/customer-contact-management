@@ -522,16 +522,19 @@
     .ocr-result-item.valid {
       border-color: #34a853;
       background-color: #f0f8f0;
+      color: #000;
     }
 
     .ocr-result-item.warning {
       border-color: #fbbc04;
       background-color: #fffbf0;
+      color: #000;
     }
 
     .ocr-result-item.error {
       border-color: #ea4335;
       background-color: #fff0f0;
+      color: #000;
     }
 
     .confidence-badge {
@@ -602,7 +605,7 @@
     </div>
   </div>
 
-  <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" style="display:none;">
+  <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" style="display:none;">
   <button class="fab" onclick="document.getElementById('fileInput').click()">📷</button>
   <button class="fab secondary" onclick="openManualAddModal()">+</button>
   <button class="fab" style="bottom: 208px; background-color: #ea4335;" onclick="openBulkCheckModal()">✅</button>
@@ -647,6 +650,13 @@
         <div id="prefixBtns" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
       </div>
       <div id="ocrResults"></div>
+      <div style="margin-top: 12px; padding: 12px; background: var(--source-bg); border: 1px dashed var(--border); border-radius: 6px;">
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; color: var(--text);">번호 수기 추가</div>
+        <div style="display: flex; gap: 8px;">
+          <input type="tel" id="ocrManualInput" placeholder="010-1234-5678" style="flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 15px; background: var(--bg-input); color: var(--text);">
+          <button class="btn btn-primary" onclick="addManualToOcr()" style="padding: 10px 16px; white-space: nowrap;">추가</button>
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="closeOcrResultModal()">취소</button>
         <button class="btn btn-primary" id="saveOcrBtn" onclick="saveOcrResults()">저장</button>
@@ -1268,7 +1278,7 @@
         return '<div class="ocr-result-item ' + item.status + '">'
           + '<input type="checkbox" ' + (item.autoSelect ? 'checked' : '') + ' data-index="' + index + '">'
           + '<span>' + emoji + '</span>'
-          + '<span style="flex: 1;" data-phone="' + item.phone + '">' + item.phone + '</span>'
+          + '<span style="flex: 1; color: #000;" data-phone="' + item.phone + '">' + item.phone + '</span>'
           + '<span class="confidence-badge">' + Math.round(item.confidence * 100) + '%</span>'
           + (item.message ? '<span style="font-size: 12px; color: #666;">[' + item.message + ']</span>' : '')
           + '</div>';
@@ -1353,6 +1363,56 @@
       indexes.forEach(function(i) {
         if (checkboxes[i]) checkboxes[i].checked = check;
       });
+    }
+
+    function addManualToOcr() {
+      var input = document.getElementById('ocrManualInput');
+      var phone = input.value.trim();
+      if (!phone) { showToast('전화번호를 입력해주세요.'); return; }
+
+      // 숫자만 추출 후 포맷팅
+      var digits = phone.replace(/\D/g, '');
+      var formatted = null;
+      if (digits.length === 11) {
+        formatted = digits.slice(0,3) + '-' + digits.slice(3,7) + '-' + digits.slice(7);
+      } else if (digits.length === 10) {
+        formatted = digits.slice(0,3) + '-' + digits.slice(3,6) + '-' + digits.slice(6);
+      } else {
+        showToast('유효하지 않은 전화번호 형식입니다.');
+        return;
+      }
+
+      // 이미 OCR 결과에 있는지 확인
+      if (ocrResultData && ocrResultData.numbers) {
+        var exists = ocrResultData.numbers.some(function(n) { return n.phone === formatted; });
+        if (exists) { showToast('이미 목록에 있는 번호입니다.'); return; }
+      }
+
+      // ocrResultData에 추가
+      var newItem = { phone: formatted, confidence: 1.0, status: 'valid', message: '수기 입력', autoSelect: true };
+      if (!ocrResultData) ocrResultData = { numbers: [], totalCount: 0, validCount: 0, warningCount: 0, errorCount: 0, imageLink: '' };
+      ocrResultData.numbers.push(newItem);
+      ocrResultData.totalCount++;
+      ocrResultData.validCount++;
+
+      // UI에 추가
+      var resultsEl = document.getElementById('ocrResults');
+      var idx = ocrResultData.numbers.length - 1;
+      var itemHtml = '<div class="ocr-result-item valid">'
+        + '<input type="checkbox" checked data-index="' + idx + '">'
+        + '<span>🟢</span>'
+        + '<span style="flex: 1; color: #000;" data-phone="' + formatted + '">' + formatted + '</span>'
+        + '<span style="font-size: 12px; color: #666;">[수기 입력]</span>'
+        + '</div>';
+      resultsEl.insertAdjacentHTML('beforeend', itemHtml);
+
+      // 통계 업데이트
+      var statsEl = document.getElementById('ocrStats');
+      statsEl.innerHTML = statsEl.innerHTML.replace(/추출된 전화번호: \d+건/, '추출된 전화번호: ' + ocrResultData.totalCount + '건');
+
+      input.value = '';
+      showToast(formatted + ' 추가됨');
+      renderPrefixButtons();
     }
 
     function closeOcrResultModal() {
