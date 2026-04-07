@@ -746,7 +746,16 @@
     var ocrResultData = null;
     var lastMemo = '';
 
+    // google.script.run 사용 가능 여부 확인
+    var isGasEnvironment = (typeof google !== 'undefined' && google.script && google.script.run);
+
     document.addEventListener('DOMContentLoaded', function() {
+      if (!isGasEnvironment) {
+        // 로컬 파일로 열었거나 GAS 환경이 아닌 경우
+        document.getElementById('tabBar').innerHTML = '<div style="padding: 12px; color: #e74c3c; font-size: 13px;">⚠️ Google Apps Script 웹앱으로 배포 후 접속해주세요. 로컬 파일에서는 작동하지 않습니다.</div>';
+        document.getElementById('contactList').innerHTML = '<div class="empty-state" style="color: #e74c3c;">⚠️ 이 앱은 Google Apps Script 웹앱으로 배포해야 정상 작동합니다.<br><br>Apps Script 에디터 → 배포 → 새 배포 → 웹 앱으로 배포하세요.</div>';
+        return;
+      }
       loadTabs();
       loadContacts();
 
@@ -768,14 +777,21 @@
     // ===== 탭 관리 =====
 
     function loadTabs() {
+      var tabTimeout = setTimeout(function() {
+        document.getElementById('tabBar').innerHTML = '<div style="padding: 12px; color: #e74c3c; font-size: 13px;">⚠️ 탭 로드 시간 초과. <a href="javascript:void(0)" onclick="loadTabs()" style="color: var(--primary);">다시 시도</a></div>';
+      }, 15000);
+
       google.script.run
         .withSuccessHandler(function(data) {
+          clearTimeout(tabTimeout);
           if (data.success) {
             renderTabs(data.tabs, data.activeTab);
           }
         })
         .withFailureHandler(function(error) {
+          clearTimeout(tabTimeout);
           console.error('탭 로드 오류:', error);
+          document.getElementById('tabBar').innerHTML = '<div style="padding: 12px; color: #e74c3c; font-size: 13px;">⚠️ 탭 로드 실패. <a href="javascript:void(0)" onclick="loadTabs()" style="color: var(--primary);">다시 시도</a></div>';
         })
         .getSheetTabs();
     }
@@ -965,10 +981,17 @@
     // ===== 연락처 =====
 
     function loadContacts() {
+      document.getElementById('contactList').innerHTML = '<div class="loading"><div class="spinner"></div><div>데이터를 불러오는 중...</div></div>';
+
+      var contactTimeout = setTimeout(function() {
+        document.getElementById('contactList').innerHTML = '<div class="empty-state" style="color: #e74c3c;">⚠️ 데이터 로드 시간 초과.<br><a href="javascript:void(0)" onclick="loadContacts()" style="color: var(--primary);">다시 시도</a></div>';
+      }, 15000);
+
       google.script.run
         .withSuccessHandler(function(data) {
+          clearTimeout(contactTimeout);
           if (!data) {
-            document.getElementById('contactList').innerHTML = '<div class="empty-state">데이터를 불러올 수 없습니다.</div>';
+            document.getElementById('contactList').innerHTML = '<div class="empty-state">데이터를 불러올 수 없습니다. <a href="javascript:void(0)" onclick="loadContacts()" style="color: var(--primary);">다시 시도</a></div>';
             return;
           }
           allContacts = data.contacts || [];
@@ -976,8 +999,9 @@
           updateStatistics();
         })
         .withFailureHandler(function(error) {
+          clearTimeout(contactTimeout);
           showToast('데이터를 불러오는데 실패했습니다.');
-          document.getElementById('contactList').innerHTML = '<div class="empty-state">데이터를 불러오는데 실패했습니다.</div>';
+          document.getElementById('contactList').innerHTML = '<div class="empty-state">데이터를 불러오는데 실패했습니다. <a href="javascript:void(0)" onclick="loadContacts()" style="color: var(--primary);">다시 시도</a></div>';
         })
         .getAllContacts();
     }
@@ -1128,9 +1152,8 @@
       document.getElementById('uploadPreview').innerHTML = '<div class="loading"><div class="spinner"></div><div>이미지 최적화 중...</div></div>';
 
       compressImage(file, function(compressedBase64) {
-        document.getElementById('uploadPreview').innerHTML =
-          '<img src="' + compressedBase64 + '" style="max-width: 100%; border-radius: 4px; margin-bottom: 12px;">'
-          + '<button class="btn btn-primary" style="width: 100%;" onclick="processOCR(\'' + compressedBase64 + '\')">OCR 실행</button>';
+        // 파일 첨부 즉시 OCR 자동 실행
+        processOCR(compressedBase64);
       });
     }
 
