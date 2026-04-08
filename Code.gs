@@ -179,6 +179,27 @@ function createEmptyTab(tabName) {
   return createNewTabWithMigration(tabName, false);
 }
 
+function renameTab(oldName, newName) {
+  if (!newName || !newName.trim()) {
+    return { success: false, message: '새 탭 이름을 입력해주세요.' };
+  }
+  newName = newName.trim();
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName(oldName);
+  if (!sheet) {
+    return { success: false, message: '탭을 찾을 수 없습니다: ' + oldName };
+  }
+  if (ss.getSheetByName(newName)) {
+    return { success: false, message: '이미 존재하는 탭 이름입니다: ' + newName };
+  }
+  sheet.setName(newName);
+  // 활성 탭이었으면 업데이트
+  if (getActiveTabName() === oldName) {
+    PropertiesService.getScriptProperties().setProperty('ACTIVE_TAB', newName);
+  }
+  return { success: true, message: '"' + oldName + '" → "' + newName + '" 변경 완료', newName: newName };
+}
+
 function moveUncontactedToTab(sourceTabName, targetTabName) {
   var ss = getSpreadsheet();
   var sourceSheet = ss.getSheetByName(sourceTabName);
@@ -300,6 +321,8 @@ function doPost(e) {
         return jsonResponse(switchTab(data.tabName));
       case 'createTab':
         return jsonResponse(createNewTabWithMigration(data.tabName, data.moveUncontacted));
+      case 'renameTab':
+        return jsonResponse(renameTab(data.oldName, data.newName));
       default:
         return jsonResponse({ error: '알 수 없는 요청입니다.' }, 400);
     }
@@ -714,7 +737,7 @@ function saveContacts(numbers, imageLink, memo) {
     return { success: true, saved: 0, skipped: skipped, message: '0건 저장, ' + skipped + '건 중복 스킵' };
   }
 
-  sheet.insertRows(2, rows.length);
+  sheet.insertRowsAfter(1, rows.length);
   sheet.getRange(2, 1, rows.length, 6).setValues(rows);
 
   var checkboxRule = SpreadsheetApp.newDataValidation().requireCheckbox().build();

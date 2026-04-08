@@ -813,7 +813,7 @@
 
       tabs.forEach(function(tab) {
         var isActive = tab.name === activeTab;
-        html += '<div class="tab-item ' + (isActive ? 'active' : '') + '" onclick="switchTab(\'' + tab.name.replace(/'/g, "\\'") + '\')">'
+        html += '<div class="tab-item ' + (isActive ? 'active' : '') + '" data-tab="' + tab.name.replace(/"/g, '&quot;') + '" onclick="switchTab(\'' + tab.name.replace(/'/g, "\\'") + '\')">'
           + tab.name
           + '<span class="tab-count">' + tab.count + '</span>'
           + '</div>';
@@ -822,6 +822,21 @@
       html += '<button class="tab-add-btn" onclick="openNewTabModal()">+ 새 탭</button>';
       html += '<button class="tab-add-btn" onclick="openMoveModal()" style="border-color:#34a853;color:#34a853;">이동</button>';
       container.innerHTML = html;
+
+      // 탭 길게 누르면 이름 변경
+      container.querySelectorAll('.tab-item').forEach(function(el) {
+        var timer = null;
+        el.addEventListener('touchstart', function(e) {
+          var tabName = el.getAttribute('data-tab');
+          timer = setTimeout(function() {
+            timer = null;
+            e.preventDefault();
+            openRenameTabPrompt(tabName);
+          }, 600);
+        });
+        el.addEventListener('touchend', function() { if (timer) clearTimeout(timer); });
+        el.addEventListener('touchmove', function() { if (timer) clearTimeout(timer); });
+      });
     }
 
     function switchTab(tabName) {
@@ -868,6 +883,25 @@
         .getSheetTabs();
 
       toggleSourceTab();
+    }
+
+    function openRenameTabPrompt(oldName) {
+      var newName = prompt('탭 이름 변경\n현재: ' + oldName, oldName);
+      if (!newName || newName.trim() === oldName) return;
+      showToast('이름 변경 중...');
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.success) {
+            showToast(data.message);
+            loadTabs();
+          } else {
+            showToast(data.message);
+          }
+        })
+        .withFailureHandler(function(error) {
+          showToast('이름 변경 실패: ' + error.message);
+        })
+        .renameTab(oldName, newName.trim());
     }
 
     function toggleSourceTab() {
